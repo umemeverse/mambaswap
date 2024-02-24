@@ -1,0 +1,15 @@
+node_modules
+.env
+coverage
+coverage.json
+typechain
+typechain-types
+package-lock.json
+yarn.lock
+
+#Hardhat files
+cache
+artifacts
+
+#Hardhat config file
+hardhat.config.ts
