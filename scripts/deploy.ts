@@ -1,24 +1,19 @@
+import { BigNumber } from 'ethers';
 import '@nomiclabs/hardhat-ethers';
 import { ethers } from "hardhat";
 
 async function main() {
-  const Banker = await ethers.getContractFactory("Banker");
-  const banker = await Banker.deploy();
+  const Mamba = await ethers.getContractFactory("Mamba");
+  const mamba = await Mamba.deploy("MambaSwap", "MBS");
 
-  await banker.deployed();
+  await mamba.deployed();
+
+  console.log(`Mamba deployed at ${ mamba.address }`);
 
   const [ user1 ] = await ethers.getSigners();
-  const signedBanker = banker.connect(user1);
 
-  await signedBanker.deposit({ value: ethers.utils.parseEther("1") });
-
-  let balance = await signedBanker.balanceOf(user1.address);
-  console.log(balance);
-
-  await signedBanker.withdraw(balance);
-
-  balance = await signedBanker.balanceOf(user1.address);
-  console.log(balance);
+  const balance = await mamba.balanceOf(user1.address);
+  console.log(`balance of ${ user1.address }: ${ balance }`);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
