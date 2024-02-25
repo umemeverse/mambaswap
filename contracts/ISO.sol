@@ -16,7 +16,14 @@ contract ISO is Ownable {
     mapping(address => uint256) deposited;
     mapping(address => bool) withdrawed;
 
-    constructor(address _mamba, address _toSale, uint256 _begin, uint256 _end, uint256 _total, uint256 _price) {
+    constructor(
+        address _mamba,
+        address _toSale,
+        uint256 _begin,
+        uint256 _end,
+        uint256 _total,
+        uint256 _price
+    ) {
         mamba = IERC20(_mamba);
         toSale = IERC20(_toSale);
         begin = _begin;
@@ -28,7 +35,10 @@ contract ISO is Ownable {
 
     function buy(uint256 mambaAmount) external {
         address buyer = _msgSender();
-        require(block.timestamp >= begin && block.timestamp <= end, "MambaSwap ISO: closed");
+        require(
+            block.timestamp >= begin && block.timestamp <= end,
+            "MambaSwap ISO: closed"
+        );
         require(left > mambaAmount, "MambaSwap ISO: no quota");
         require(mamba.transferFrom(buyer, address(this), mambaAmount));
         deposited[buyer] += mambaAmount;
@@ -46,6 +56,6 @@ contract ISO is Ownable {
 
     function count(address buyer) public view returns (uint256) {
         uint256 mambaAmount = deposited[buyer];
-        return mambaAmount * 10000 / price;
+        return (mambaAmount * 10000) / price;
     }
 }
