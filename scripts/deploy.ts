@@ -16,6 +16,15 @@ async function main() {
   console.log(`balance of ${ user1.address }: ${ balance }`);
 }
 
+async function deployStakingPool(stakingToken: string, rewardToken: string, begin: number, end: number, rewardPerPeriod: number, decimals: number, transferNoReturn: boolean) {
+  const Pool = await ethers.getContractFactory("Pool");
+  const pool = await Pool.deploy(stakingToken, rewardToken, rewardPerPeriod, transferNoReturn, begin, end, decimals);
+
+  await pool.deployed();
+
+  console.log(`Pool deployed at ${ pool.address }`)
+}
+
 // We recommend this pattern to be able to use async/await everywhere
 // and properly handle errors.
 main().catch((error) => {

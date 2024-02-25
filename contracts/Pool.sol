@@ -2,9 +2,8 @@
 pragma solidity >=0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
 
-contract Pool is Ownable {
+contract Pool {
     IERC20 public stakeToken;
     IERC20 public rewardToken;
 
@@ -13,30 +12,23 @@ contract Pool is Ownable {
     mapping(address => uint256) public userDebt;                    // user's debt
     mapping(address => uint256) private paidReward;                 // user earned and harvested
 
-    uint256 public startTime;
-    uint256 public period;
-    uint256 public totalPeriod;
+    uint256 public begin;   // block height
+    uint256 public end;     // block height
     uint256 public decimals;
     uint256 public rewardPerPeriod;                                 // reward of some period
     uint256 public accRewardPerUnit;                                // acc reward
     uint256 public lastRewardPeriod;                                // last reward period
     bool public transferNoReturn;
 
-    constructor(address _stakeToken, address _rewardToken, uint256 _rewardPerPeriod, bool _transferNoReturn, uint256 _startTime, uint256 _decimals, uint256 _period, uint256 _totalPeriod) {
+    constructor(address _stakeToken, address _rewardToken, uint256 _rewardPerPeriod, bool _transferNoReturn, uint256 _begin, uint256 _end, uint256 _decimals) {
         accRewardPerUnit = 0;
         rewardToken = IERC20(_rewardToken);
         stakeToken = IERC20(_stakeToken);
         rewardPerPeriod = _rewardPerPeriod;
         transferNoReturn = _transferNoReturn;
-        startTime = _startTime;
+        begin = _begin;
+        end = _end;
         decimals = _decimals;
-        period = _period;
-        totalPeriod = _totalPeriod;
-    }
-
-    function updateRewardPerPeriod(uint256 _rewardPerPeriod) external onlyOwner returns (bool) {
-        rewardPerPeriod = _rewardPerPeriod;
-        return true;
     }
 
     function totalSupply() public view returns (uint256) {
@@ -117,21 +109,14 @@ contract Pool is Ownable {
     }
 
     function currentPeriod() public view returns (uint256) {
-        if (block.timestamp < startTime) {
+        if (block.number < begin) {
             return 0;
         }
-        uint256 time = block.timestamp - startTime;
-        uint256 mod = time % period;
-        time = time - mod;
-        uint256 _period = time / period;
-        if (_period > totalPeriod) {
-            _period = totalPeriod;
-        }
-        return _period;
+        return block.number - begin;
     }
 
     function updatePool() private returns (bool) {
-        if (_totalSupply == 0 || block.timestamp <= startTime) {
+        if (_totalSupply == 0 || block.number <= begin) {
             return false;
         }
         uint256 lastP = currentPeriod();
