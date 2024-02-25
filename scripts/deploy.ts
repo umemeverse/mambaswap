@@ -1,4 +1,3 @@
-import { BigNumber } from 'ethers';
 import '@nomiclabs/hardhat-ethers';
 import { ethers } from "hardhat";
 
@@ -31,3 +30,7 @@ main().catch((error) => {
   console.error(error);
   process.exitCode = 1;
 });
+
+export {
+  deployStakingPool
+}
