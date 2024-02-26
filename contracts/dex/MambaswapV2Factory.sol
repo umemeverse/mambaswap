@@ -60,4 +60,8 @@ contract MambaswapV2Factory {
         require(msg.sender == feeToSetter, "MambaswapV2: FORBIDDEN");
         feeToSetter = _feeToSetter;
     }
+
+    function pairCodeHash() external pure returns (bytes32) {
+        return keccak256(type(MambaswapV2Pair).creationCode);
+    }
 }

@@ -35,7 +35,7 @@ library MambaswapV2Library {
                             hex"ff",
                             factory,
                             keccak256(abi.encodePacked(token0, token1)),
-                            hex"c779f884b0d3b96c99d18260ba7f1b2c9a66dcddcacbcdf30f304d308cd4976e" // init code hash
+                            hex"6c77ed1452dfb19d6092aeabea118e73f8f6f1efe7378fde0ce02102d8397a56" // init code hash
                         )
                     )
                 )
