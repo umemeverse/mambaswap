@@ -3,6 +3,7 @@ import { anyValue } from "@nomicfoundation/hardhat-chai-matchers/withArgs";
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { BigNumber } from "ethers";
+import { token } from "../typechain-types/@openzeppelin/contracts";
 
 describe("Dex", function () {
   async function deployContracts() {
@@ -19,6 +20,7 @@ describe("Dex", function () {
 
     await tokenA.approve(router.address, BigNumber.from("100000000000000000000000000"));
     await tokenB.approve(router.address, BigNumber.from("100000000000000000000000000"));
+    await router.addLiquidity(tokenA.address, tokenB.address, BigNumber.from("100000000000000000000"), BigNumber.from("100000000000000000000"), 1, 1, owner.address, 1800000000);
 
     return { owner, tokenA, tokenB, weth, factory, router };
   }
@@ -26,74 +28,76 @@ describe("Dex", function () {
   describe("Add Liquidity", function () {
     it("can add liquidity", async function () {
       const { factory, router, tokenA, tokenB, owner } = await loadFixture(deployContracts);
-      await router.addLiquidity(tokenA.address, tokenB.address, "100000000000000000000", "100000000000000000000", 1, 1, owner.address, 1800000000);
 
-      // expect(await factory.allPairsLength()).to.equal(1);
+      expect(await factory.allPairsLength()).to.equal(1);
     });
 
-    // it("Should have right name", async function () {
-    //   const { ft } = await loadFixture(deployFT);
-
-    //   expect(await ft.name()).to.equal(name);
-    // });
+    it("has right reservers", async function() {
+      const { factory, router, tokenA, tokenB, owner } = await loadFixture(deployContracts);
+      const address = await factory.getPair(tokenA.address, tokenB.address);
+      const Pair = await ethers.getContractFactory("MambaswapV2Pair");
+      const pair = await Pair.attach(address);
+      const [reserver0, reserver1] = await pair.getReserves();
+      
+      expect(reserver0).to.equal("100000000000000000000")
+      expect(reserver1).to.equal("100000000000000000000")
+    })
   });
 
-  // describe("Mintable", function () {
-  //   it("Should mintable by owner", async function () {
-  //     const { ft } = await loadFixture(deployFT);
-  //     const [owner] = await ethers.getSigners();
-  //     const signedFt = ft.connect(owner)
-  //     const amount = 100
-  //     await signedFt.mint(owner.address, amount)
+  describe("Swap", function () {
+    it("sell tokenA", async function () {
+      const { factory, router, tokenA, tokenB, owner } = await loadFixture(deployContracts);
+      await router.swapExactTokensForTokens("100000000000000000000", 1, [tokenA.address, tokenB.address], owner.address, 1800000000);
 
-  //     expect(await ft.balanceOf(owner.address)).to.equal(amount);
-  //   });
+      const address = await factory.getPair(tokenA.address, tokenB.address);
+      const Pair = await ethers.getContractFactory("MambaswapV2Pair");
+      const pair = await Pair.attach(address);
+      const [reserver0, reserver1] = await pair.getReserves();
+      const token0 = await pair.token0();
+      if (token0 === tokenA.address) {
+        expect(reserver0).to.equal("200000000000000000000");
+      } else {
+        expect(reserver1).to.equal("200000000000000000000");
+      }
 
-  //   it("Should mintable by owner for other account", async function () {
-  //     const { ft } = await loadFixture(deployFT);
-  //     const [owner, otherAccount] = await ethers.getSigners();
-  //     const signedFt = ft.connect(owner)
-  //     const amount = 1000
-  //     await signedFt.mint(otherAccount.address, amount)
+      expect(await factory.allPairsLength()).to.equal(1);
+    });
 
-  //     expect(await ft.balanceOf(otherAccount.address)).to.equal(amount);
-  //   });
+    it("sell tokenB", async function() {
+      const { factory, router, tokenA, tokenB, owner } = await loadFixture(deployContracts);
+      await router.swapTokensForExactTokens("1000000000000000000", "100000000000000000000", [tokenB.address, tokenA.address], owner.address, 1800000000);
 
-  //   it("Should not mintable by other account", async function () {
-  //     const { ft } = await loadFixture(deployFT);
-  //     const [owner, otherAccount] = await ethers.getSigners();
-  //     const signedFt = ft.connect(otherAccount)
-  //     const amount = 100
+      const address = await factory.getPair(tokenA.address, tokenB.address);
+      const Pair = await ethers.getContractFactory("MambaswapV2Pair");
+      const pair = await Pair.attach(address);
+      const [reserver0, reserver1] = await pair.getReserves();
 
-  //     signedFt.mint(otherAccount.address, amount).catch(async (e) => {
-  //       expect(await ft.balanceOf(owner.address)).to.equal(0);
-  //     })
-  //   });
-  // });
-
-  // describe("Pausable", function () {
-  //   it("Should pause and resume by owner", async function () {
-  //     const { ft } = await loadFixture(deployFT);
-  //     const [owner, otherAccount] = await ethers.getSigners();
-  //     const signedFt = ft.connect(owner)
+      const token0 = await pair.token0();
+      if (token0 === tokenB.address) {
+        expect(reserver1).to.equal("99000000000000000000");
+      } else {
+        expect(reserver0).to.equal("99000000000000000000");
+      }
       
-  //     await signedFt.mint(owner.address, 1000)
+      // expect(reserver1).to.equal("99000000000000000000");
 
-  //     await signedFt.pause()
+      expect(await factory.allPairsLength()).to.equal(1);
+    })
+  });
 
-  //     signedFt.transfer(otherAccount.address, 100).catch( async (e)=>{
-  //       expect(await ft.balanceOf(owner.address)).to.equal(1000);
-  //       expect(await ft.balanceOf(otherAccount.address)).to.equal(0);
-  //     })
+  describe("Remove Liquidity", function () {
+    it("remove liquidity", async function () {
+      const { factory, router, tokenA, tokenB, owner } = await loadFixture(deployContracts);
+      const address = await factory.getPair(tokenA.address, tokenB.address);
+      const Pair = await ethers.getContractFactory("MambaswapV2Pair");
+      const pair = await Pair.attach(address);
+      await pair.approve(router.address, "10000000000000000000000000000")
 
-  //     await signedFt.unpause()
-  //     await signedFt.transfer(otherAccount.address, 100)
-  //     expect(await ft.balanceOf(owner.address)).to.equal(900);
-  //     expect(await ft.balanceOf(otherAccount.address)).to.equal(100);
-  //   });
-
-  //   it("Should not pausable by other account", async function () {
+      await router.removeLiquidity(tokenA.address, tokenB.address, "50000000000000000000", 1, 1, owner.address, 1800000000)
+      const [reserver0, reserver1] = await pair.getReserves();
       
-  //   });
-  // });
+      expect(reserver0).to.equal("50000000000000000000");
+      expect(reserver0).to.equal("50000000000000000000");
+    });
+  });
 });
