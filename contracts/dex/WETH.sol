@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 // Copyright (C) 2015, 2016, 2017 Dapphub
 
 // This program is free software: you can redistribute it and/or modify
@@ -28,7 +29,7 @@ contract WETH9 {
     mapping(address => uint256) public balanceOf;
     mapping(address => mapping(address => uint256)) public allowance;
 
-    fallback() external payable {
+    receive() external payable {
         deposit();
     }
 
