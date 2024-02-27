@@ -54,6 +54,10 @@ contract ISO is Ownable {
         withdrawed[buyer] = true;
     }
 
+    function adminWithdraw() external onlyOwner {
+        mamba.transfer(owner(), mamba.balanceOf(address(this)));
+    }
+
     function count(address buyer) public view returns (uint256) {
         uint256 mambaAmount = deposited[buyer];
         return (mambaAmount * 10000) / price;
