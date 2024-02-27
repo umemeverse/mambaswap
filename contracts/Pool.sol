@@ -52,11 +52,10 @@ contract Pool {
     }
 
     function unpaidRewardOf(address account) public view returns (uint256) {
-        uint256 lastP = currentPeriod();
-        if (balanceOf(account) == 0 || lastP == 0) {
+        if (balanceOf(account) == 0) {
             return 0;
         }
-        uint256 periods = lastP - lastRewardPeriod;
+        uint256 periods = currentPeriod() - lastRewardPeriod;
         uint256 reward = periods * rewardPerPeriod;
         uint256 perReward = accRewardPerUnit +
             (reward * decimals) /
@@ -134,13 +133,13 @@ contract Pool {
         if (_totalSupply == 0 || block.number <= begin) {
             return false;
         }
-        uint256 lastP = currentPeriod();
-        uint256 periods = lastP - lastRewardPeriod;
+        uint256 current = currentPeriod();
+        uint256 periods = current - lastRewardPeriod;
         uint256 reward = periods * (rewardPerPeriod);
         accRewardPerUnit =
             accRewardPerUnit +
             ((reward * (decimals)) / (_totalSupply));
-        lastRewardPeriod = lastP;
+        lastRewardPeriod = current;
         return true;
     }
 }

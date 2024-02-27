@@ -49,12 +49,18 @@ contract ISO is Ownable {
         address buyer = _msgSender();
         require(withdrawed[buyer] == false, "MambaSwap ISO: withdrawd");
         require(block.timestamp >= end, "MambaSwap ISO: not finished");
-        uint256 saledCount = count(buyer);
-        toSale.transfer(buyer, saledCount);
+        if (left == 0) {
+            uint256 saledCount = count(buyer);
+            toSale.transfer(buyer, saledCount);
+        } else {
+            mamba.transfer(buyer, deposited[buyer]);
+        }
         withdrawed[buyer] = true;
     }
 
     function adminWithdraw() external onlyOwner {
+        require(block.timestamp >= end, "MambaSwap ISO: not finished");
+        require(left == 0, "MambaSwap ISO: rasie failed");
         mamba.transfer(owner(), mamba.balanceOf(address(this)));
     }
 
