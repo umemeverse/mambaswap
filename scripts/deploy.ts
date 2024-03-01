@@ -3,6 +3,7 @@ import { ethers } from "hardhat";
 
 import { deployMamba } from './mamba';
 // import { deployStakingPool } from './pool';
+import { deployDex } from './dex';
 
 
 async function main() {
@@ -14,6 +15,9 @@ async function main() {
 
   const balance = await mamba.balanceOf(user1.address);
   console.log(`balance of ${user1.address}: ${balance}`);
+
+  const [weth, factory, router] = await deployDex();
+  console.log(weth.address, factory.address, router.address);
 }
 
 // We recommend this pattern to be able to use async/await everywhere
